@@ -1797,10 +1797,27 @@ class MusicBot(discord.Client):
 
         return Response(":ok_hand:", delete_after=20)
 
+    async def cmd_playlist(self, player, server):
+        playlist = ''
+        for idx, entry in enumerate(player.playlist.entries):
+            playlist += str(idx) + '.' + entry.title + '\n'
+        return Response("Current playlist: \n%s" % playlist, delete_after=20)
+
+    async def cmd_dequeue(self, player, args):
+        for arg in args:
+            self.safe_print(arg)
+            for idx, entry in enumerate(player.playlist.entries):
+                if str(idx) == str(arg):
+                    del player.playlist.entries[idx]
+                    return Response("Removed " + entry.title + " from playlist")
 
     async def cmd_disconnect(self, server):
         await self.disconnect_voice_client(server)
         return Response(":hear_no_evil:", delete_after=20)
+
+    async def cmd_samomoment(self, server, player):
+        if player.is_playing:
+            player.pause()
 
     async def cmd_restart(self, channel):
         await self.safe_send_message(channel, ":wave:")
@@ -1831,6 +1848,7 @@ class MusicBot(discord.Client):
 
         handler = getattr(self, 'cmd_%s' % command, None)
         if not handler:
+            self.safe_print("No handler found for: %s".format(command))
             return
 
         if message.channel.is_private:
